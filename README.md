@@ -15,7 +15,7 @@ A tool to scan devices connected to your home router or private network, combini
 1. Run the main Python script:
 
    ```bash
-   python3 app.py
+   python3 scan.py
    ```
 
 2. The script will:
