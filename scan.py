@@ -82,14 +82,14 @@ def check_nmap():
                     print("Nmap installed successfully")
                     return 0
                 except subprocess.CalledProcessError:
-                try:
-                    # Try pacman (Arch)
-                    install = subprocess.run(['sudo', 'pacman', '-S', '--noconfirm', 'nmap'], check=True)
-                    print("Nmap installed successfully")
-                    return 0
-                except subprocess.CalledProcessError:
-                    print("Failed to install Nmap. Please install it manually.")
-                    return 1
+                    try:
+                        # Try pacman (Arch)
+                        install = subprocess.run(['sudo', 'pacman', '-S', '--noconfirm', 'nmap'], check=True)
+                        print("Nmap installed successfully")
+                        return 0
+                    except subprocess.CalledProcessError:
+                        print("Failed to install Nmap. Please install it manually.")
+                        return 1
 
 def get_network_interface_ips():
     """Get all network interface IPv4 addresses using psutil (cross-platform)."""
