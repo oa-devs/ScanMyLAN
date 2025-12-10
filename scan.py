@@ -9,10 +9,10 @@ except ImportError:
 import socket
 
 def get_os():
-    os = platform.system()
-    if os == "Darwin":
+    system_os = platform.system()
+    if system_os == "Darwin":
         return "Mac"
-    elif os == "Linux":
+    elif system_os == "Linux":
         return "Linux"
     else:
         print("Unsupported operating system. This tool only supports Mac and Linux.")
@@ -29,7 +29,7 @@ def package_tools():
         else:
             print("Homebrew is not installed")
             print("Installing homebrew .........")
-            install = subprocess.run(['/bin/bash', '-c', "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"])
+            install = subprocess.run(['/bin/bash', '-c', "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"], capture_output=True, text=True)
             if install.returncode == 0:
                 print("Homebrew installed successfully")
                 return True
@@ -53,7 +53,7 @@ def check_nmap():
         else:
             print("Nmap is not installed")
             print("Installing nmap .........")
-            install = subprocess.run(['brew', 'install', 'nmap'])
+            install = subprocess.run(['brew', 'install', 'nmap'], capture_output=True, text=True, timeout=300)
             if install.returncode == 0:
                 print("Nmap installed successfully")
                 return True
@@ -72,19 +72,19 @@ def check_nmap():
             # Try different package managers
             try:
                 # Try apt first (Debian/Ubuntu)
-                install = subprocess.run(['sudo', 'apt', 'install', '-y', 'nmap'], check=True)
+                install = subprocess.run(['sudo', 'apt', 'install', '-y', 'nmap'], check=True, timeout=300)
                 print("Nmap installed successfully")
                 return True
             except subprocess.CalledProcessError:
                 try:
                     # Try yum (RHEL/CentOS)
-                    install = subprocess.run(['sudo', 'yum', 'install', '-y', 'nmap'], check=True)
+                    install = subprocess.run(['sudo', 'yum', 'install', '-y', 'nmap'], check=True, timeout=300)
                     print("Nmap installed successfully")
                     return True
                 except subprocess.CalledProcessError:
                     try:
                         # Try pacman (Arch)
-                        install = subprocess.run(['sudo', 'pacman', '-S', '--noconfirm', 'nmap'], check=True)
+                        install = subprocess.run(['sudo', 'pacman', '-S', '--noconfirm', 'nmap'], check=True, timeout=300)
                         print("Nmap installed successfully")
                         return True
                     except subprocess.CalledProcessError:
@@ -138,8 +138,8 @@ def display_network_info():
     interfaces = get_network_interface_ips()
     if interfaces:
         for interface, ip in interfaces.items():
-            print(f"  {interface}: {ip}")
-            get_network_range(ip)
+            network_range = get_network_range(ip)
+            print(f"  {interface}: {ip} ({network_range})")
     else:
         print("  No interfaces found")
     
@@ -159,7 +159,7 @@ def display_network_info():
         print(f"  Private IP: {private_ip}")
         print(f"  Network Range: {network_range}")
 
-    return private_ip, network_range if private_ip else None
+    return (private_ip, network_range) if private_ip and network_range else (None, None)
 
 if __name__ == "__main__":
     print("Local Port Scanner - Mac/Linux Edition")
@@ -182,13 +182,24 @@ if __name__ == "__main__":
     private_ip, network_range = display_network_info()
     if network_range:
         # Make the scanner script executable
-        subprocess.Popen(['chmod', '+x', './scan.sh'])
+        try:
+            subprocess.run(['chmod', '+x', './scan.sh'], timeout=10)
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            print(f"Warning: Could not make script executable: {e}")
         
-        scan_type = input("Enter the type of scan (discovery, ports, vuln): ")
+        # Validate scan type input
+        valid_scan_types = ['discovery', 'ports', 'vuln', '-d', '-p', '-v', 'd', 'p', 'v']
+        scan_type = input("Enter the type of scan (discovery/ports/vuln): ").strip()
+        if scan_type not in valid_scan_types:
+            print(f"Invalid scan type: {scan_type}")
+            print(f"Valid options: {', '.join(valid_scan_types[:3])}")
+            exit(1)
         
         # Run the scanner script for both Mac and Linux
         try:
-            subprocess.run(['./scan.sh', network_range, scan_type], check=True)
+            subprocess.run(['./scan.sh', network_range, scan_type], check=True, timeout=3600)
+        except subprocess.TimeoutExpired:
+            print("Scanner scan timed out after 1 hour.")
         except subprocess.CalledProcessError as e:
             print(f"Scanner failed with error: {e}")
         except FileNotFoundError:

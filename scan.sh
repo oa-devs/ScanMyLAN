@@ -80,16 +80,16 @@ case $SCAN_TYPE in
         # Check if running as root or if sudo is available
         if [ "$EUID" -eq 0 ]; then
             echo "Running as root - proceeding with SYN scan"
-            NMAP_CMD="nmap --script vuln -p- -Pn -sS -sV --min-rate 1000 --max-retries 1 --host-timeout 30s --open -oN $OUTPUT_FILE $TARGET"
+            nmap --script vuln -p- -Pn -sS -sV --min-rate 1000 --max-retries 1 --host-timeout 30s --open -oN "$OUTPUT_FILE" "$TARGET"
         elif command -v sudo &> /dev/null; then
             echo "Using sudo for SYN scan (you may be prompted for password)"
-            NMAP_CMD="sudo nmap --script vuln -p- -Pn -sS -sV --min-rate 1000 --max-retries 1 --host-timeout 30s --open -oN $OUTPUT_FILE $TARGET"
+            sudo nmap --script vuln -p- -Pn -sS -sV --min-rate 1000 --max-retries 1 --host-timeout 30s --open -oN "$OUTPUT_FILE" "$TARGET"
         else
             echo "No sudo available, using TCP connect scan (slower but doesn't require root)"
-            NMAP_CMD="nmap --script vuln -p- -Pn -sT -sV --min-rate 1000 --max-retries 1 --host-timeout 30s --open -oN $OUTPUT_FILE $TARGET"
+            nmap --script vuln -p- -Pn -sT -sV --min-rate 1000 --max-retries 1 --host-timeout 30s --open -oN "$OUTPUT_FILE" "$TARGET"
         fi
         
-        if eval "$NMAP_CMD"; then
+        if [ $? -eq 0 ]; then
             echo "Vulnerability scan completed successfully"
             echo "Results saved to: $OUTPUT_FILE"
         else
