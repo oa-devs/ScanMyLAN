@@ -25,22 +25,22 @@ def package_tools():
         check_brew = subprocess.run(['brew', '--version'], capture_output=True, text=True)
         if check_brew.returncode == 0:
             print("Homebrew is installed")
-            return 0
+            return True
         else:
             print("Homebrew is not installed")
             print("Installing homebrew .........")
             install = subprocess.run(['/bin/bash', '-c', "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"])
             if install.returncode == 0:
                 print("Homebrew installed successfully")
-                return 0
+                return True
             else:
                 print("Failed to install Homebrew")
-                return 1
+                return False
     
     elif current_os == "Linux":
         # For Linux, we'll check for package managers and install dependencies
         print("Linux detected - package management will be handled per distribution")
-        return 0
+        return True
 
 def check_nmap():
     current_os = get_os()
@@ -49,23 +49,23 @@ def check_nmap():
         mac_nmap = subprocess.run(['which', 'nmap'], capture_output=True, text=True)
         if mac_nmap.returncode == 0:
             print("Nmap is installed")
-            return 0
+            return True
         else:
             print("Nmap is not installed")
             print("Installing nmap .........")
             install = subprocess.run(['brew', 'install', 'nmap'])
             if install.returncode == 0:
                 print("Nmap installed successfully")
-                return 0
+                return True
             else:
                 print("Failed to install Nmap")
-                return 1
+                return False
 
     elif current_os == "Linux":
         linux_nmap = subprocess.run(['which', 'nmap'], capture_output=True, text=True)
         if linux_nmap.returncode == 0:
             print("Nmap is installed")
-            return 0
+            return True
         else:
             print("Nmap is not installed")
             print("Installing nmap .........")
@@ -74,22 +74,22 @@ def check_nmap():
                 # Try apt first (Debian/Ubuntu)
                 install = subprocess.run(['sudo', 'apt', 'install', '-y', 'nmap'], check=True)
                 print("Nmap installed successfully")
-                return 0
+                return True
             except subprocess.CalledProcessError:
                 try:
                     # Try yum (RHEL/CentOS)
                     install = subprocess.run(['sudo', 'yum', 'install', '-y', 'nmap'], check=True)
                     print("Nmap installed successfully")
-                    return 0
+                    return True
                 except subprocess.CalledProcessError:
                     try:
                         # Try pacman (Arch)
                         install = subprocess.run(['sudo', 'pacman', '-S', '--noconfirm', 'nmap'], check=True)
                         print("Nmap installed successfully")
-                        return 0
+                        return True
                     except subprocess.CalledProcessError:
                         print("Failed to install Nmap. Please install it manually.")
-                        return 1
+                        return False
 
 def get_network_interface_ips():
     """Get all network interface IPv4 addresses using psutil (cross-platform)."""
@@ -169,10 +169,10 @@ if __name__ == "__main__":
     nmap_code = check_nmap()
 
     failed = []
-    if pkg_code != 0:
-        failed.append(f"package_tools (code {pkg_code})")
-    if nmap_code != 0:
-        failed.append(f"check_nmap (code {nmap_code})")
+    if not pkg_code:
+        failed.append("package_tools")
+    if not nmap_code:
+        failed.append("check_nmap")
 
     if not failed:
         print("All tools installed successfully")
